@@ -1,0 +1,24 @@
+---
+
+  - name: Chatbot Master Playbook
+    gather_facts: no
+
+    hosts: "all"
+
+  - name: Importing createFilesystem
+    import_playbook: createFilesystem.yml hosts2manage="{{ h2m | default("managedhosts") }}"
+
+  - name: Importing installDependencies
+    import_playbook: installDependencies.yml hosts2manage="{{ h2m | default("managedhosts") }}"
+    when:
+      - hostvars[inventory_hostname]['proceedWithInstallation']
+
+  - name: Importing installSoftware
+    import_playbook: installSoftware.yml hosts2manage="{{ h2m | default("managedhosts") }}"
+    when:
+      - hostvars[inventory_hostname]['proceedWithInstallation']
+
+  - name: Importing startServices
+    import_playbook: startServices.yml hosts2manage="{{ h2m | default("managedhosts") }}"
+    when:
+      - hostvars[inventory_hostname]['proceedWithInstallation']
