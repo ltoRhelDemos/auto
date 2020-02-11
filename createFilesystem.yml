@@ -1,0 +1,54 @@
+---
+
+  - name: Creating required filesystem for chatbot!
+
+    hosts: '{{ hosts2manage | default("managedhosts") }}'
+    
+    become: yes
+    become_user: root
+    
+    tasks:
+    
+      - name: check disk
+        block:
+          - name: checking for device /dev/sdb
+            set_fact: proceedWithInstallation=yes
+            when:  hostvars[inventory_hostname]["ansible_facts"]["devices"]["xvdb"] 
+        rescue:
+          - name: Device /dev/sdb does not exists!
+            set_fact: proceedWithInstallation=no
+            notify: "failed"
+          
+                
+      - name: creating disk facilities
+        block:
+          - name: Creating a XFS filesystem on lvm /dev/sdb
+            filesystem:
+              fstype: "xfs"
+              dev: "/dev/xvdb"
+              force: no
+
+          - name: Creating the mounting point /home/chatbot.
+            file:
+              path: "/home/chatbot/"
+              state: directory
+              mode: '0700'
+
+          - name: Mount the  filesystem.
+            mount:
+              path: "/home/chatbot"
+              src: "/dev/xvdb"
+              fstype: "xfs"
+              opts: rw,nosuid,noexec
+              state: mounted
+
+        when:
+          - hostvars[inventory_hostname]['proceedWithInstallation']
+        
+      - name: Error on disk creation results
+        debug: 
+          msg: "An error occured when trying to create the disk facilities for the chatbot, aborting installation! {{hostvars[inventory_hostname]['proceedWithInstallation']}}"
+        when:  
+          - not hostvars[inventory_hostname]['proceedWithInstallation']
+          
+
