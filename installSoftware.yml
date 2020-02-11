@@ -1,0 +1,49 @@
+
+---
+
+  - name: Installing chatbot software
+
+    hosts: '{{ hosts2manage | default("managedhosts") }}'
+
+    become: yes
+    become_user: root
+
+    gather_facts: no
+
+    tasks:
+
+    - name: Setting reboot to "no" unless needed
+      set_fact: reboot=no
+
+    - name: Clonning the chatbot software repository
+      git:
+        repo: 'https://github.com/ltoRhelDemos/python-ansible-chatbot.git'
+        dest: /home/chatbot/
+        force: yes
+
+    - name: copying files template to /etc/systemd/system
+      copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system
+        remote_src: yes
+        mode: '0644'
+      loop:
+        - /home/chatbot/ansibleChatbotEngine.service
+        - /home/chatbot/ansibleChatbotWebInterface.service
+
+    - name: Openning the webservice port 8080
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+      loop:
+        - 8080/tcp
+        - 9095/tcp
+      notify: "restart firewalld"
+
+    handlers:
+    - name: restarting the firewalld
+      service:
+        name: firewalld
+        state: restarted
+      listen: "restart firewalld"
