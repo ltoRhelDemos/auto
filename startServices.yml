@@ -1,0 +1,24 @@
+---
+
+  - name: Starting chatbot services
+
+    hosts: '{{ hosts2manage | default("managedhosts") }}'
+
+    become: yes
+    become_user: root
+
+    gather_facts: no
+
+    tasks:
+
+      - name: enable ansibleChatbotEngine service
+        systemd:
+          name: ansibleChatbotEngine
+          state: restarted
+          enabled: yes
+
+      - name: enable ansibleChatbotWebInterface service
+        systemd:
+          name: ansibleChatbotWebInterface
+          state: restarted
+          enabled: yes
